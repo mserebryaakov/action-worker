@@ -2,9 +2,9 @@ package main
 
 import (
 	"action-worker/config"
-	"action-worker/dispatcher"
+	"action-worker/internal/dispatcher"
+	"action-worker/internal/worker"
 	"action-worker/pkg/zaplog"
-	"action-worker/worker"
 	"context"
 	"fmt"
 	"os"
@@ -31,12 +31,25 @@ func main() {
 	d := dispatcher.New()
 
 	// Запуск демон горутины на выполнение
+	doneCh := make(chan struct{})
 	w := worker.New(log, d)
-	w.Do(ctx)
+	go func() {
+		w.Do(ctx, env.WorkerFrequency)
+		doneCh <- struct{}{}
+	}()
 
 	// Gracefull shutdown
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-	<-sigCh
-	cancel()
+
+	for {
+		select {
+		case <-sigCh:
+			log.Warn("shutdown by signal")
+			cancel()
+		case <-doneCh:
+			log.Warn("success shutdown")
+			return
+		}
+	}
 }

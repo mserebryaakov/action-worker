@@ -1,6 +1,6 @@
 package dispatcher
 
-import "action-worker/action"
+import "action-worker/internal/action"
 
 type IDispatcher interface {
 	Dispatch(action action.Action)

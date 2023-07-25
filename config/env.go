@@ -1,13 +1,16 @@
 package config
 
 import (
+	"errors"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
 type AppEnv struct {
-	Debug bool
+	Debug           bool
+	WorkerFrequency uint64
 }
 
 func GetEnv() (env AppEnv, err error) {
@@ -19,8 +22,15 @@ func GetEnv() (env AppEnv, err error) {
 		debugResult = true
 	}
 
+	workerFreqEnv := lookupEnv("WORKERFREQUENCY", "")
+	workerFreqResult, err := strconv.ParseUint(workerFreqEnv, 10, 64)
+	if err != nil || workerFreqResult < 1 {
+		return AppEnv{}, errors.New("WORKERFREQUENCY is not a correct")
+	}
+
 	env = AppEnv{
-		Debug: debugResult,
+		Debug:           debugResult,
+		WorkerFrequency: workerFreqResult,
 	}
 
 	return env, err

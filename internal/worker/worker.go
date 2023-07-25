@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"action-worker/dispatcher"
+	"action-worker/internal/dispatcher"
 	"context"
 	"time"
 
@@ -22,15 +22,14 @@ func New(log *zap.Logger, d dispatcher.IDispatcher) *worker {
 }
 
 // Старт демон процесса worker
-func (w *worker) Do(ctx context.Context) {
+func (w *worker) Do(ctx context.Context, frequency uint64) {
 	for {
 		select {
 		case <-ctx.Done():
 			w.log.Warn("worker terminated by context")
 			return
-		case <-time.After(1 * time.Minute):
-			// Отправка запроса
-			// w.d.Dispatch()
+		case <-time.After(time.Duration(frequency) * time.Second):
+			w.log.Info("tick!")
 		}
 	}
 }
