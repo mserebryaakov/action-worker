@@ -2,6 +2,7 @@ package main
 
 import (
 	"action-worker/config"
+	"action-worker/internal/adapter/queue"
 	"action-worker/internal/dispatcher"
 	"action-worker/internal/worker"
 	"action-worker/pkg/zaplog"
@@ -30,9 +31,12 @@ func main() {
 	// Создание диспетчера actions
 	d := dispatcher.New()
 
+	// Создание клиента к REST потоку RabbitMQ
+	restRabbit := queue.NewRabbitRestClient(env.RestRabbitUrl)
+
 	// Запуск демон горутины на выполнение
 	doneCh := make(chan struct{})
-	w := worker.New(log, d)
+	w := worker.New(log, d, restRabbit)
 	go func() {
 		w.Do(ctx, env.WorkerFrequency)
 		doneCh <- struct{}{}

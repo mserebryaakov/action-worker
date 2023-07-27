@@ -23,7 +23,7 @@ type AppError struct {
 	Err error
 	// код http
 	HTTPCode int
-	// полезная нагрущка
+	// полезная нагрузка
 	Payload interface{}
 }
 

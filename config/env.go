@@ -11,6 +11,7 @@ import (
 type AppEnv struct {
 	Debug           bool
 	WorkerFrequency uint64
+	RestRabbitUrl   string
 }
 
 func GetEnv() (env AppEnv, err error) {
@@ -28,9 +29,15 @@ func GetEnv() (env AppEnv, err error) {
 		return AppEnv{}, errors.New("WORKERFREQUENCY is not a correct")
 	}
 
+	restRabbitUrl := lookupEnv("RABBITURL", "")
+	if restRabbitUrl == "" {
+		return AppEnv{}, errors.New("RABBITURL is not a correct")
+	}
+
 	env = AppEnv{
 		Debug:           debugResult,
 		WorkerFrequency: workerFreqResult,
+		RestRabbitUrl:   restRabbitUrl,
 	}
 
 	return env, err
