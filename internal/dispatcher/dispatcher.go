@@ -1,20 +1,51 @@
 package dispatcher
 
-import "action-worker/internal/action"
+import (
+	"action-worker/internal/action"
+	"action-worker/internal/handler"
+	"errors"
+	"fmt"
+
+	"github.com/mitchellh/mapstructure"
+)
 
 type IDispatcher interface {
-	Dispatch(action action.Action)
+	Dispatch(action action.Action) error
 }
 
-// Конструктор диспетчера actions
-func New() *Dispatcher {
-	return &Dispatcher{}
+// Создание диспетчера, перенаправляющего action на обработчики
+func New(handler handler.IActionHandler) IDispatcher {
+	return &dispatcher{
+		handler: handler,
+	}
 }
 
-// Диспетчер, перенаправляющий action на обработчики
-type Dispatcher struct {
+type dispatcher struct {
+	handler handler.IActionHandler
 }
 
-func (d *Dispatcher) Dispatch(action action.Action) {
+func (d *dispatcher) Dispatch(actionItem action.Action) error {
+	switch actionItem.Type {
+	case action.CreateLeadRequestType:
+		if data, ok := actionItem.Data.(map[string]interface{}); ok {
+			var сreateLeadActionData action.CreateLeadActionData
+			err := mapstructure.Decode(data, &сreateLeadActionData)
+			if err != nil {
+				textErr := fmt.Sprintf("CreateLeadActionData decode err: %s", err.Error())
+				return errors.New(textErr)
+			}
 
+			createLeadAction := action.CreateLeadAction{
+				Action: actionItem,
+				Data:   сreateLeadActionData,
+			}
+
+			return d.handler.CreateLead(createLeadAction)
+		}
+		textErr := fmt.Sprintf("undexpected action data type: %s", actionItem.Data)
+		return errors.New(textErr)
+	default:
+		textErr := fmt.Sprintf("undexpected action type: %s", actionItem.Type)
+		return errors.New(textErr)
+	}
 }

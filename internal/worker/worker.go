@@ -2,6 +2,7 @@ package worker
 
 import (
 	"action-worker/internal/adapter/queue"
+	"action-worker/internal/apperror"
 	"action-worker/internal/dispatcher"
 	"context"
 	"time"
@@ -15,7 +16,7 @@ type worker struct {
 	queue queue.QueueClient
 }
 
-// Конструктор демон процесса worker
+// Создание демон процесса worker (без запуска)
 func New(log *zap.Logger, d dispatcher.IDispatcher, queue queue.QueueClient) *worker {
 	return &worker{
 		d:     d,
@@ -33,8 +34,30 @@ func (w *worker) Do(ctx context.Context, frequency uint64) {
 			return
 		case <-time.After(time.Duration(frequency) * time.Second):
 			w.log.Info("tick!")
-			// w.queue.PullMessages()
-			// w.d.Dispatch()
+			w.tick()
+		}
+	}
+}
+
+func (w *worker) tick() {
+	action, err := w.queue.PullMessage()
+	if err != nil {
+		apperr, ok := err.(*apperror.AppError)
+		if ok {
+			w.log.Error(err.Error(), zap.Int("httpCode", apperr.HTTPCode), zap.Any("Code", apperr.Code))
+		} else {
+			w.log.Error(err.Error())
+		}
+	} else {
+		if action != nil {
+			err := w.d.Dispatch(*action)
+			if err != nil {
+				w.log.Error(err.Error())
+			} else {
+				w.log.Info("success dispatch")
+			}
+		} else {
+			w.log.Info("queue is empty")
 		}
 	}
 }

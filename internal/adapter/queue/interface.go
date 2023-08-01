@@ -1,5 +1,7 @@
 package queue
 
+import "action-worker/internal/action"
+
 type QueueClient interface {
-	PullMessages() error
+	PullMessage() (*action.Action, error)
 }

@@ -1,4 +1,4 @@
-package process
+package elma
 
 import (
 	"action-worker/internal/apperror"
@@ -24,7 +24,7 @@ type ProcessRunResponseBody struct {
 	ItemResponse
 }
 
-func (e *ElmaAdapter) ProcessRun(context ProcessContext) (err error) {
+func (e *adapter) ProcessRun(context ProcessContext) (err error) {
 	prefix := "ProcessRun:"
 	reqUrl := fmt.Sprintf("%s/%s", e.url, processUrl)
 

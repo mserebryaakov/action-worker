@@ -9,9 +9,13 @@ import (
 )
 
 type AppEnv struct {
-	Debug           bool
-	WorkerFrequency uint64
-	RestRabbitUrl   string
+	Debug               bool
+	WorkerFrequency     uint64
+	RestRabbitUrl       string
+	RestRabbitRouteCode string
+	RestRabbitRoutePass string
+	ElmaUrl             string
+	ElmaToken           string
 }
 
 func GetEnv() (env AppEnv, err error) {
@@ -34,10 +38,29 @@ func GetEnv() (env AppEnv, err error) {
 		return AppEnv{}, errors.New("RABBITURL is not a correct")
 	}
 
+	restRabbitRouteCode := lookupEnv("RABBITROUTECODE", "")
+	if restRabbitRouteCode == "" {
+		return AppEnv{}, errors.New("RABBITROUTECODE is not a correct")
+	}
+
+	restRabbitRoutePass := lookupEnv("RABBITROUTEPASS", "")
+	if restRabbitRoutePass == "" {
+		return AppEnv{}, errors.New("RABBITROUTEPASS is not a correct")
+	}
+
+	elmaUrl := lookupEnv("ELMAURL", "")
+	if elmaUrl == "" {
+		return AppEnv{}, errors.New("ELMAURL is not a correct")
+	}
+
 	env = AppEnv{
-		Debug:           debugResult,
-		WorkerFrequency: workerFreqResult,
-		RestRabbitUrl:   restRabbitUrl,
+		Debug:               debugResult,
+		WorkerFrequency:     workerFreqResult,
+		RestRabbitUrl:       restRabbitUrl,
+		RestRabbitRouteCode: restRabbitRouteCode,
+		RestRabbitRoutePass: restRabbitRoutePass,
+		ElmaUrl:             elmaUrl,
+		ElmaToken:           lookupEnv("ELMATOKEN", ""),
 	}
 
 	return env, err

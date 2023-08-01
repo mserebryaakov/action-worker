@@ -2,8 +2,10 @@ package main
 
 import (
 	"action-worker/config"
+	"action-worker/internal/adapter/elma"
 	"action-worker/internal/adapter/queue"
 	"action-worker/internal/dispatcher"
+	"action-worker/internal/handler"
 	"action-worker/internal/worker"
 	"action-worker/pkg/zaplog"
 	"context"
@@ -28,15 +30,22 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Создание клиента к ELMA
+	elmaAdapter := elma.New(env.ElmaUrl, env.ElmaToken)
+
+	// Создание обработчика для actions
+	//actionHandler := handler.New(elmaAdapter)
+	actionHandler := handler.NewMock(elmaAdapter)
+
 	// Создание диспетчера actions
-	d := dispatcher.New()
+	dispatch := dispatcher.New(actionHandler)
 
 	// Создание клиента к REST потоку RabbitMQ
-	restRabbit := queue.NewRabbitRestClient(env.RestRabbitUrl)
+	restRabbit := queue.NewRabbitRestClient(env.RestRabbitUrl, env.RestRabbitRouteCode, env.RestRabbitRoutePass)
 
 	// Запуск демон горутины на выполнение
 	doneCh := make(chan struct{})
-	w := worker.New(log, d, restRabbit)
+	w := worker.New(log, dispatch, restRabbit)
 	go func() {
 		w.Do(ctx, env.WorkerFrequency)
 		doneCh <- struct{}{}
@@ -49,10 +58,10 @@ func main() {
 	for {
 		select {
 		case <-sigCh:
-			log.Warn("shutdown by signal")
+			log.Warn("service shutdown by signal")
 			cancel()
 		case <-doneCh:
-			log.Warn("success shutdown")
+			log.Warn("service success shutdown")
 			return
 		}
 	}

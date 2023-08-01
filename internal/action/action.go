@@ -2,7 +2,7 @@ package action
 
 import "time"
 
-// Структура action из rabbit потока
+// Структура action из rabbit REST потока
 type Action struct {
 	ID        string      `json:"Id"`
 	Origin    string      `json:"Origin"`

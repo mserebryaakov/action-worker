@@ -8,9 +8,7 @@ RUN go mod download
 
 RUN go build -o /app/main cmd/main.go
 
-FROM alpine:latest
-
-# COPY config/config.json /config/config.json
+FROM alpine:3.18
 
 COPY --from=builder /app/main /main
 
